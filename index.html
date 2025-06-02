@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watchword Dictionary</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/app.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Watchword Dictionary</h1>
+    </header>
+    <main class="container">
+        <section id="loading" style="display: unset;">
+            <h2>Loading...</h2>
+            <p id="loading-message">
+                Please wait while the game data is being loaded.
+            </p>
+        </section>
+        <section id="version" style="display: none;">
+            <h2>Game version</h2>
+            <form id="version-form">
+                <select id="version-select" placeholder="Game version" required>
+                </select>
+                <button id="version-button" type="submit">Load version</button>
+            </form>
+        </section>
+        <section id="check-word" style="display: none;">
+            <h2>Check a word</h2>
+            <form id="check-word-form">
+                <input type="text" id="word-input" placeholder="Enter a word"
+                    minlength="2", maxlength="40" autocomplete="off" required>
+                <button id="check-button" type="submit" disabled>Check</button>
+            </form>
+            <div id="result">
+            </div>
+        </section>
+        <section id="definition" style="display: none;">
+            <h3>Definition</h3>
+            <p id="definition-text"></p>
+        </section>
+        <section id="info" style="display: none;">
+            <h2>Info</h2>
+            <div id="info-result"></div>
+        </section>
+        <section id="coverage" style="display: none;">
+            <h2>Coverage</h2>
+            <button id="coverage-button">Get Coverage</button>
+            <div id="coverage-result"></div>
+        </section>
+    </main>
+</body>
+</html>

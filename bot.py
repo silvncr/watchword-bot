@@ -14,16 +14,22 @@ load_dotenv()
 
 TOKEN = os.environ['DISCORD_TOKEN']
 
+VERSION = '0.2.2'
 
-WATCHWORD_LIST: list[str] = ['demo-0.4.6', 'demo-0.5.3']
-WATCHWORD_REFERENCE: dict[str, str | None] = {'demo-0.4.6': None, 'demo-0.5.3': None}
+
+WATCHWORD_REFERENCES: dict[str, str | None] = json.loads(
+    Path('data', 'watchword_references.json').read_text(),
+)
+WATCHWORD_VERSIONS: list[str] = json.loads(
+    Path('data', 'watchword_versions.json').read_text(),
+)
 
 
 def find_reference(version: str) -> str:
     '''Find the reference for a given version.'''
-    if WATCHWORD_REFERENCE[version] is None:
+    if WATCHWORD_REFERENCES[version] is None:
         return version
-    return find_reference(WATCHWORD_REFERENCE[version])  # type: ignore
+    return find_reference(WATCHWORD_REFERENCES[version])  # type: ignore
 
 
 def create_version_string(version: str) -> str:
@@ -31,24 +37,16 @@ def create_version_string(version: str) -> str:
     version_referenced = find_reference(version)
     if version == version_referenced:
         return version
-    return f'{version} <- {version_referenced}'
+    return f'{version_referenced} -> {version}'
 
-
-VERSIONS = {
-    'bot': '0.2.1',
-    'cleanlist': '0.2',
-    'listpatches': '1.0',
-    'qrs': '3.0.0',
-    'watchword': find_reference(WATCHWORD_LIST[-1]),
-}
 
 OPTIONS = {
     'version': nextcord.SlashOption(
         name='version',
         description='The Watchword game version to check against',
         required=False,
-        choices=[*WATCHWORD_LIST],
-        default=WATCHWORD_LIST[-1],
+        choices=[*WATCHWORD_VERSIONS],
+        default=WATCHWORD_VERSIONS[0],
         verify=True,
     ),
     'word': nextcord.SlashOption(
@@ -63,7 +61,7 @@ OPTIONS = {
 
 
 client = commands.Bot(
-    description=f'Watchword Dictionary ver. {VERSIONS["bot"]}',
+    description=f'Watchword Dictionary v{VERSION}',
     intents=nextcord.Intents.default(),
 )
 
@@ -76,7 +74,7 @@ def embed(title: str, description: str, color: int = 0xFFFFFF) -> nextcord.Embed
             name='Watchword Dictionary',
             icon_url='https://cdn.discordapp.com/icons/1327739235121496125/6273973dd811f41333d22f2dc2a1baeb.webp',
         )
-        .set_footer(text=f'v. {VERSIONS["bot"]} | use "/info versions" for details')
+        .set_footer(text=f'v{VERSION}')
     )
 
 
@@ -91,7 +89,8 @@ async def on_ready() -> None:
     print(f'Logged in as {client.user} (ID: {client.user.id})')  # type: ignore
     await client.change_presence(
         activity=nextcord.Activity(
-            type=nextcord.ActivityType.watching, name=f'for {len(_wordlist):,} words',
+            type=nextcord.ActivityType.watching,
+            name=f'for {len(wordlist_full):,} words',
         ),
         status=nextcord.Status.online,
     )
@@ -122,12 +121,12 @@ async def check(
             )
             return
     await interaction.response.defer()
-    version_ref = find_reference(version)
-    version_s = create_version_string(version)
-    if word in wordlists[version_ref]:
+    version_referenced = find_reference(version)
+    version_string = create_version_string(version)
+    if word in wordlists[version_referenced]:
         _embed = embed(
             title=f':white_check_mark: {word}',
-            description=f'This is a valid word in Watchword v. `{version_s}`.',
+            description=f'This is a valid word in Watchword {version_string}',
             color=0x00FF00,
         )
         if _definition := find_definition(word):
@@ -145,7 +144,9 @@ async def check(
         await interaction.followup.send(
             embed=embed(
                 title=f':x: {word}',
-                description=f'This is not a valid word in Watchword v. `{version_s}`.',
+                description=(
+                    f'This is not a valid word in Watchword {version_string}'
+                ),
                 color=0xFF0000,
             ),
         )
@@ -196,32 +197,15 @@ async def ping(interaction: nextcord.Interaction) -> None:
     print(f'Ping by {interaction.user} ({interaction.user.id}) - {_latency} ms')  # type: ignore
 
 
-@info.subcommand(
-    name='versions', description='Get the versions of the bot and its components',
-)
-async def versions(interaction: nextcord.Interaction) -> None:
-    '''Get the versions of the bot and its components.'''
-    await interaction.response.defer(ephemeral=True)
-    await interaction.followup.send(
-        embed=embed(
-            title=':clipboard: Versions',
-            description=f'```\n{
-                "\n".join(f"{key}: {val}" for key, val in VERSIONS.items())
-            }\n```',
-        ),
-    )
-    print(f'Versions requested by {interaction.user} ({interaction.user.id})')  # type: ignore
-
-
 if __name__ == '__main__':
     wordlists: dict[str, set[str]] = {
         version: set(
-            Path('riplists', f'watchword_wordlist_{version}.txt')
+            Path('data', 'wordlists', f'watchword_wordlist_{version}.txt')
             .read_text()
             .strip()
             .splitlines(),
         )
-        for version in WATCHWORD_LIST
+        for version in WATCHWORD_VERSIONS
         if version == find_reference(version)
     }
     wordlist_full: set[str] = set()
@@ -230,7 +214,7 @@ if __name__ == '__main__':
         wordlist_full.update(_wordlist)
     print(f'Loaded {len(wordlist_full):_} words')
 
-    all_definitions = json.loads(Path('dictionary_combined.json').read_text())
+    all_definitions = json.loads(Path('data', 'dictionary_combined.json').read_text())
     definitions = {
         key: val for key, val in all_definitions.items() if key in wordlist_full
     }

@@ -1,0 +1,117 @@
+:root {
+    --primary: ;
+    --secondary: ;
+    --heading-1: #e0e0e0;
+    --heading-2: #c0c0c0;
+    --heading-3: #a0a0a0;
+    --text: #d0ffff;
+    --background: #303030;
+    --headerfooter: #35424a;
+    --button: #355575;
+    --button-hover: #45a049;
+}
+
+html {
+    max-width: 80ch;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background);
+    color: var(--text);
+}
+
+header {
+    background: var(--headerfooter);
+    color: var(--heading-1);
+    padding: 20px 0;
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+    color: var(--heading-1);
+}
+
+h2 {
+    padding-top: 1rem;
+    color: var(--heading-2);
+}
+
+h3, h4, h5, h6 {
+    color: var(--heading-3);
+}
+
+main {
+    padding: 20px;
+}
+
+section > *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6) {
+    padding-left: 2em;
+}
+
+section {
+    padding-bottom: 4rem;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    overflow: hidden;
+}
+
+select {
+    width: 15ch;
+    padding: 10px
+}
+
+input[type="text"] {
+    width: 40ch;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
+    text-transform: uppercase;
+}
+
+button {
+    background: #355575;
+    color: #ffffff;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+button:hover {
+    background: #45a049;
+}
+
+.results {
+    margin-top: 20px;
+}
+
+.result-item {
+    background: #ffffff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+}
+
+pre {
+    white-space: pre-wrap;
+}
+
+footer {
+    background: #35424a;
+    color: #ffffff;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
