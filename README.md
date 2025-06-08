@@ -43,9 +43,6 @@ The wordlist contents are formatted according to [`silvncr/wordlist-cleaner#word
 
 `/data/watchword_flags.json` contains a dictionary that describes the flags imbued by each wordlist type. Keys are types, values are a list of flags.
 
-> [!NOTE]
-> Watchword versions earlier than 0.6.0 don't use flags.
-
 #### Word flags
 
 Flags are applied to words to give them different behaviours in-game.

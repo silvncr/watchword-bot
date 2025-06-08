@@ -1,6 +1,13 @@
 {
-    "wordlist": [],
-    "badlist": [
+    "not_watchwords": [
         "NotWatchword"
-    ]
+    ],
+    "scrabble_plus": [
+        "ScrabblePlus"
+    ],
+    "target_word_list": [
+        "Target"
+    ],
+    "watchword_dictionary": [],
+    "watchword_wordlist": []
 }
