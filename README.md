@@ -50,7 +50,7 @@ The wordlist contents are formatted according to [`silvncr/wordlist-cleaner#word
 
 Flags are applied to words to give them different behaviours in-game.
 
-[!IMPORTANT]
+> [!IMPORTANT]
 > All flag names are subject to change. Please view the file to see the latest relationships.
 >
 > This system is intended to reflect the game's behaviour, but it's ultimately arbitrary. There may be discrepancies. Where possible, it will be updated to better reflect what happens in-game.
