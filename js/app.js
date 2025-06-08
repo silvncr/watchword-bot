@@ -16,6 +16,9 @@ const result_display = document.getElementById('result');
 const section_definition = document.getElementById('definition');
 const definition_text = document.getElementById('definition-text');
 
+const section_flags = document.getElementById('flags');
+const flags_text = document.getElementById('flags-text');
+
 const section_info = document.getElementById('info');
 const section_coverage = document.getElementById('coverage');
 
@@ -60,16 +63,38 @@ let _definition;
 let selected_version;
 let version_referenced;
 let version_string;
-let _wordlist = [];
+let current_wordlist = {};
 
 
 // Load wordlist for the selected version
 async function load_wordlist(version) {
-    _wordlist = (await read_file(
-        `data/wordlists/watchword_wordlist_${version}.txt`
-    )).trim().split('\n').map(word => word.toUpperCase());
+    current_wordlist = {};
 
-    console.log(`loaded wordlist: ${_wordlist.length} words`);
+    // Prepare all file reads in parallel
+    const filePromises = Object.entries(WATCHWORD_FLAGS).map(async ([_type, _flags]) => {
+        const filePath = `data/wordlists/${version}_${_type}.txt`;
+        const content = await read_file(filePath);
+        return {
+            _type, _flags, words: content.trim().split('\n').map(w => w.toUpperCase())
+        };
+    });
+
+    const results = await Promise.all(filePromises);
+
+    for (const { _flags, words } of results) {
+        for (const word of words) {
+            if (!word) {
+                continue;
+            };
+            if (!(word in current_wordlist)) {
+                current_wordlist[word] = new Set(_flags);
+            } else {
+                _flags.forEach(flag => current_wordlist[word].add(flag));
+            };
+        };
+    };
+
+    console.log(`loaded wordlist: ${Object.keys(current_wordlist).length} words`);
 };
 
 
@@ -82,21 +107,29 @@ async function load_data() {
     );
     console.log(`loaded dictionary: ${Object.keys(DICTIONARY_COMBINED).length} words`);
 
+    const WATCHWORD_FLAGS = await read_json('data/watchword_flags.json');
+    console.assert(
+        Boolean(WATCHWORD_FLAGS),
+        'WATCHWORD_FLAGS is empty, null, or undefined'
+    )
+    console.log(`loaded flags: ${Object.keys(WATCHWORD_FLAGS).length} flags`);
+
     const WATCHWORD_REFERENCES = await read_json('data/watchword_references.json');
     console.assert(
         Boolean(WATCHWORD_REFERENCES),
-        'WATCHWORD_REFERENCES is null, undefined, or empty'
+        'WATCHWORD_REFERENCES is empty, null, or undefined'
     );
     console.log(`loaded references: ${Object.keys(WATCHWORD_REFERENCES).length} references`);
 
     const WATCHWORD_VERSIONS = await read_json('data/watchword_versions.json');
     console.assert(
         Boolean(WATCHWORD_VERSIONS),
-        'WATCHWORD_VERSIONS is null, undefined, or empty'
+        'WATCHWORD_VERSIONS is empty, null, or undefined'
     );
     console.log(`loaded versions: ${WATCHWORD_VERSIONS.length} versions`);
 
     globalThis.DICTIONARY_COMBINED = DICTIONARY_COMBINED;
+    globalThis.WATCHWORD_FLAGS = WATCHWORD_FLAGS;
     globalThis.WATCHWORD_REFERENCES = WATCHWORD_REFERENCES;
     globalThis.WATCHWORD_VERSIONS = WATCHWORD_VERSIONS;
     console.log('data loaded successfully');
@@ -123,16 +156,25 @@ async function populate_version_select() {
 // Check word validity and display definition
 function check_word(word) {
     console.log(`checking word: ${word}`);
-    _word_is_valid = _wordlist.includes(word);
+    _word_is_valid = Object.keys(current_wordlist).includes(word);
     result_display.innerHTML = _word_is_valid ?
         `<p>${word} is valid in Watchword ${selected_version}</p>` :
         `<p>${word} is not valid in Watchword ${selected_version}</p>`
-        ;
+    ;
     if (!_word_is_valid) {
         section_definition.style.display = 'none';
         definition_text.innerHTML = '';
+        section_flags.style.display = 'none';
+        flags_text.innerHTML = '';
         return;
     }
+    flags_text.textContent = Array.from(current_wordlist[word]).length > 0 ?
+        Array.from(current_wordlist[word]).join(', ') :
+        '(none)'
+        ;
+    console.log(`flags: ${Array.from(current_wordlist[word])}`);
+    section_flags.style.display = 'unset';
+
     _definition = find_definition(word);
     if (!_definition) {
         section_definition.style.display = 'none';
@@ -157,6 +199,8 @@ version_form.addEventListener('submit', async (event) => {
     result_display.innerHTML = '';
     section_definition.style.display = 'none';
     definition_text.innerHTML = '';
+    section_flags.style.display = 'none';
+    flags_text.textContent = '';
     section_info.style.display = 'none';
     section_coverage.style.display = 'none';
     
@@ -164,7 +208,7 @@ version_form.addEventListener('submit', async (event) => {
     version_referenced = find_reference(selected_version);
     version_string = create_version_string(selected_version);
 
-    loading_message.textContent = `Loading wordlist for version: ${version_string}`;
+    loading_message.textContent = `Loading data for Watchword ${version_string}`;
 
     console.log(`selected version: ${selected_version}`)
     console.log(`referenced version: ${version_referenced}`)
@@ -175,6 +219,7 @@ version_form.addEventListener('submit', async (event) => {
     section_loading.style.display = 'none';
     section_version.style.display = 'unset';
     section_check_word.style.display = 'unset';
+    // section_coverage.style.display = 'unset';
 });
 
 word_input.addEventListener('input', async (event) => {

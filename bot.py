@@ -14,7 +14,7 @@ load_dotenv()
 
 TOKEN = os.environ['DISCORD_TOKEN']
 
-VERSION = '0.2.2'
+VERSION = '0.3.2'
 
 
 WATCHWORD_REFERENCES: dict[str, str | None] = json.loads(
@@ -61,8 +61,7 @@ OPTIONS = {
 
 
 client = commands.Bot(
-    description=f'Watchword Dictionary v{VERSION}',
-    intents=nextcord.Intents.default(),
+    description=f'Watchword Dictionary v{VERSION}', intents=nextcord.Intents.default(),
 )
 
 
@@ -70,10 +69,10 @@ def embed(title: str, description: str, color: int = 0xFFFFFF) -> nextcord.Embed
     '''Create a simple embed.'''
     return (
         nextcord.Embed(title=title, description=description, color=color)
-        .set_author(
-            name='Watchword Dictionary',
-            icon_url='https://cdn.discordapp.com/icons/1327739235121496125/6273973dd811f41333d22f2dc2a1baeb.webp',
-        )
+        # .set_author(
+        #     name='Watchword Dictionary',
+        #     icon_url='https://cdn.discordapp.com/icons/1327739235121496125/6273973dd811f41333d22f2dc2a1baeb.webp',
+        # )
         .set_footer(text=f'v{VERSION}')
     )
 
@@ -115,38 +114,41 @@ async def check(
     ]:
         if x:
             await interaction.response.defer(ephemeral=True)
-            print(f'\tInvalid input: "{y}')
+            print(f'\tInvalid input: "{y}"')
             await interaction.followup.send(
-                f':warning: Invalid input: `{word or "(empty)"}`\n> {y}',
+                f':warning: Invalid input: `{word or '(empty)'}`\n> {y}',
             )
             return
     await interaction.response.defer()
     version_referenced = find_reference(version)
     version_string = create_version_string(version)
     if word in wordlists[version_referenced]:
+        print('\tValid word')
         _embed = embed(
             title=f':white_check_mark: {word}',
             description=f'This is a valid word in Watchword {version_string}',
             color=0x00FF00,
         )
         if _definition := find_definition(word):
-            print(f'\tValid word - "{_definition}"')
-            await interaction.followup.send(
-                embed=_embed.add_field(
-                    name='Definition', value=f'```\n{_definition}\n```',
-                ),
+            print(f'\tDefinition found: "{_definition}"')
+            _embed=_embed.add_field(
+                name='Definition', value=f'```\n{_definition}\n```', inline=False,
             )
-            return
-        print('\tValid word - no definition found')
+        else:
+            print('\tNo definition found')
+        print(f'\tFlags: {(_flags := wordlists[version_referenced][word])}')
+        _embed.add_field(
+            name='Flags',
+            value=f'{', '.join(_flags)}' if _flags else '(none)',
+            inline=False,
+        )
         await interaction.followup.send(embed=_embed)
     else:
         print('\tInvalid word')
         await interaction.followup.send(
             embed=embed(
                 title=f':x: {word}',
-                description=(
-                    f'This is not a valid word in Watchword {version_string}'
-                ),
+                description=(f'This is not a valid word in Watchword {version_string}'),
                 color=0xFF0000,
             ),
         )
@@ -173,11 +175,11 @@ async def coverage(
         embed=embed(
             title=':bar_chart: Coverage',
             description=f'**{version_s}**```\n{
-                "\n".join(
+                '\n'.join(
                     [
-                        f"words: {_words:,}",
-                        f"definitions: {_definitions:,}",
-                        f"coverage: {_definitions / _words * 100:.2f}%",
+                        f'words: {_words:,}',
+                        f'definitions: {_definitions:,}',
+                        f'coverage: {_definitions / _words * 100:.2f}%',
                     ]
                 )
             }\n```',
@@ -198,21 +200,31 @@ async def ping(interaction: nextcord.Interaction) -> None:
 
 
 if __name__ == '__main__':
-    wordlists: dict[str, set[str]] = {
-        version: set(
-            Path('data', 'wordlists', f'watchword_wordlist_{version}.txt')
-            .read_text()
-            .strip()
-            .splitlines(),
-        )
-        for version in WATCHWORD_VERSIONS
-        if version == find_reference(version)
-    }
+    wordlists: dict[str, dict[str, set]] = {}
     wordlist_full: set[str] = set()
-    for _version, _wordlist in wordlists.items():
-        print(f'Loaded {len(_wordlist):_} words for version {_version}')
-        wordlist_full.update(_wordlist)
-    print(f'Loaded {len(wordlist_full):_} words')
+    for _version in WATCHWORD_VERSIONS:
+        if _version != find_reference(_version):
+            continue
+        print(f'Loading wordlist for version {_version}..')
+        wordlists[_version] = {}
+        for _type, _flags in {
+            'wordlist': set(),
+            'badlist': {'bad'},
+            'cleanlist': {'clean'},
+        }.items():
+            if (_path := Path('data', 'wordlists', f'{_version}_{_type}.txt')).exists():
+                wordlists[_version] |= {
+                    word.strip().upper():
+                    wordlists[_version].get(word.strip().upper(), set()) | _flags
+                    for word in _path.read_text().strip().splitlines()
+                }
+        if not wordlists[_version]:
+            print('\tNo wordlist found, skipping..')
+            continue
+        print(f'\tLoaded {len(wordlists[_version]):_} words')
+        wordlist_full.update(wordlists[_version].keys())
+
+    print(f'Loaded {len(wordlist_full):_} total words')
 
     all_definitions = json.loads(Path('data', 'dictionary_combined.json').read_text())
     definitions = {
