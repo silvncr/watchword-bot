@@ -14,7 +14,7 @@ load_dotenv()
 
 TOKEN = os.environ['DISCORD_TOKEN']
 
-VERSION = '0.3.2'
+VERSION = '0.3.3'
 
 
 WATCHWORD_REFERENCES: dict[str, str | None] = json.loads(
@@ -207,15 +207,13 @@ if __name__ == '__main__':
             continue
         print(f'Loading wordlist for version {_version}..')
         wordlists[_version] = {}
-        for _type, _flags in {
-            'wordlist': set(),
-            'badlist': {'bad'},
-            'cleanlist': {'clean'},
-        }.items():
+        for _type, _flags in json.loads(
+            Path('data', 'watchword_flags.json').read_text(),
+        ).items():
             if (_path := Path('data', 'wordlists', f'{_version}_{_type}.txt')).exists():
                 wordlists[_version] |= {
                     word.strip().upper():
-                    wordlists[_version].get(word.strip().upper(), set()) | _flags
+                    wordlists[_version].get(word.strip().upper(), set()) | set(_flags)
                     for word in _path.read_text().strip().splitlines()
                 }
         if not wordlists[_version]:
