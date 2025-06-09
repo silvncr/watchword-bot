@@ -169,7 +169,7 @@ function check_word(word) {
         return;
     }
     flags_text.textContent = Array.from(current_wordlist[word]).length > 0 ?
-        Array.from(current_wordlist[word]).join(', ') :
+        Array.from(current_wordlist[word]).sort().join(', ') :
         '(none)'
         ;
     console.log(`flags: ${Array.from(current_wordlist[word])}`);

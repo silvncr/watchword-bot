@@ -14,7 +14,7 @@ load_dotenv()
 
 TOKEN = os.environ['DISCORD_TOKEN']
 
-VERSION = '0.3.3'
+VERSION = '0.3.4'
 
 
 WATCHWORD_REFERENCES: dict[str, str | None] = json.loads(
@@ -139,7 +139,7 @@ async def check(
         print(f'\tFlags: {(_flags := wordlists[version_referenced][word])}')
         _embed.add_field(
             name='Flags',
-            value=f'{', '.join(_flags)}' if _flags else '(none)',
+            value=f'{', '.join(sorted(_flags))}' if _flags else '(none)',
             inline=False,
         )
         await interaction.followup.send(embed=_embed)
