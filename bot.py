@@ -14,7 +14,7 @@ load_dotenv()
 
 TOKEN = os.environ['DISCORD_TOKEN']
 
-VERSION = '0.3.4'
+VERSION = '0.3.6'
 
 
 WATCHWORD_REFERENCES: dict[str, str | None] = json.loads(
@@ -43,7 +43,7 @@ def create_version_string(version: str) -> str:
 OPTIONS = {
     'version': nextcord.SlashOption(
         name='version',
-        description='The Watchword game version to check against',
+        description='Watchword game version to check against',
         required=False,
         choices=[*WATCHWORD_VERSIONS],
         default=WATCHWORD_VERSIONS[0],
@@ -51,7 +51,7 @@ OPTIONS = {
     ),
     'word': nextcord.SlashOption(
         name='word',
-        description='The word to check against the Watchword dictionary',
+        description='Word to check against the Watchword dictionary',
         required=True,
         min_length=2,
         max_length=40,
@@ -155,13 +155,9 @@ async def check(
 
 
 @client.slash_command(
-    name='info', description='Get information about the Watchword Dictionary bot',
+    name='coverage',
+    description='Get the coverage of word definitions',
 )
-async def info(interaction: nextcord.Interaction) -> None:
-    '''Parent command.'''
-
-
-@info.subcommand(name='coverage', description='Get the coverage of word definitions')
 async def coverage(
     interaction: nextcord.Interaction, version: str = OPTIONS['version'],
 ) -> None:
@@ -174,7 +170,7 @@ async def coverage(
     await interaction.followup.send(
         embed=embed(
             title=':bar_chart: Coverage',
-            description=f'**{version_s}**```\n{
+            description=f'Watchword {version_s}```\n{
                 '\n'.join(
                     [
                         f'words: {_words:,}',
@@ -188,7 +184,7 @@ async def coverage(
     print(f'Coverage requested by {interaction.user} ({interaction.user.id})')  # type: ignore
 
 
-@info.subcommand(name='ping', description='Returns bot latency')
+@client.slash_command(name='ping', description='Measure the current bot latency')
 async def ping(interaction: nextcord.Interaction) -> None:
     '''Ping command to check bot latency.'''
     await interaction.response.defer(ephemeral=True)
@@ -200,7 +196,7 @@ async def ping(interaction: nextcord.Interaction) -> None:
 
 
 if __name__ == '__main__':
-    wordlists: dict[str, dict[str, set]] = {}
+    wordlists: dict[str, dict[str, set[str]]] = {}
     wordlist_full: set[str] = set()
     for _version in WATCHWORD_VERSIONS:
         if _version != find_reference(_version):
@@ -217,18 +213,21 @@ if __name__ == '__main__':
                     for word in _path.read_text().strip().splitlines()
                 }
         if not wordlists[_version]:
-            print('\tNo wordlist found, skipping..')
+            print('\tNo words found')
             continue
         print(f'\tLoaded {len(wordlists[_version]):_} words')
         wordlist_full.update(wordlists[_version].keys())
 
     print(f'Loaded {len(wordlist_full):_} total words')
 
-    all_definitions = json.loads(Path('data', 'dictionary_combined.json').read_text())
+    _definitions_temp = json.loads(Path('data', 'dictionary_combined.json').read_text())
     definitions = {
-        key: val for key, val in all_definitions.items() if key in wordlist_full
+        key: val for key, val in _definitions_temp.items() if key in wordlist_full
     }
-    del all_definitions
-    print(f'Loaded {len(definitions):_} definitions')
+    print(
+        f'Loaded the required {len(definitions) / len(_definitions_temp) * 100:.2f}% '
+        f'of definitions ({len(definitions):_} of {len(_definitions_temp):_})',
+    )
+    del _definitions_temp
 
     client.run(TOKEN)

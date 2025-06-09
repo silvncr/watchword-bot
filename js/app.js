@@ -132,6 +132,7 @@ async function load_data() {
     globalThis.WATCHWORD_FLAGS = WATCHWORD_FLAGS;
     globalThis.WATCHWORD_REFERENCES = WATCHWORD_REFERENCES;
     globalThis.WATCHWORD_VERSIONS = WATCHWORD_VERSIONS;
+
     console.log('data loaded successfully');
 };
 
@@ -244,14 +245,12 @@ check_word_form.addEventListener('submit', (event) => {
 
 // Initialise the application
 async function init() {
-
-    populate_version_select();
+    await populate_version_select();
 
     section_loading.style.display = 'none';
     section_version.style.display = 'unset';
 
     console.log('app initialised');
-
 };
 
 document.addEventListener('DOMContentLoaded', init);
