@@ -71,7 +71,7 @@ def embed(title: str, description: str, color: int = 0xFFFFFF) -> nextcord.Embed
         nextcord.Embed(title=title, description=description, color=color)
         # .set_author(
         #     name='Watchword Dictionary',
-        #     icon_url='https://cdn.discordapp.com/icons/1327739235121496125/6273973dd811f41333d22f2dc2a1baeb.webp',
+        #     icon_url='https://cdn.discordapp.com/avatars/1376949038061981860/79b29fe28db10cc2438b601201461a8a.webp',
         # )
         .set_footer(text=f'v{VERSION}')
     )
