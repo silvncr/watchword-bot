@@ -93,6 +93,17 @@ To add support for a new Watchword version, you must do all of the following:
 
 ### Discord bot
 
+0.4.x
+
+- Removed `/coverage` command for simplicity
+
+<!-- Abandoned; converted to `/utils/`
+0.4.x
+
+- Added `/diff` command to track wordlist changes across versions
+- Added `/filter` command to interactively search the wordlist
+-->
+
 0.3.x
 
 - Added flags system
@@ -101,12 +112,12 @@ To add support for a new Watchword version, you must do all of the following:
 
 0.2.x
 
-- Added support for multiple game versions
-  - `/check` and `/coverage` now have a `version:` parameter
-  - The newest version is selected by default
 - Added dictionary functionality
   - Definitions appear under `/check` result
   - Added `/coverage` command to see an overview of dictionary data per version
+- Added support for multiple game versions
+  - `/check` and `/coverage` now have a `version:` parameter
+  - The newest version is selected by default
 
 0.1.x
 

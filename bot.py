@@ -14,7 +14,7 @@ load_dotenv()
 
 TOKEN = os.environ['DISCORD_TOKEN']
 
-VERSION = '0.3.6'
+VERSION = '0.4.0'
 
 
 WATCHWORD_REFERENCES: dict[str, str | None] = json.loads(
@@ -26,14 +26,14 @@ WATCHWORD_VERSIONS: list[str] = json.loads(
 
 
 def find_reference(version: str) -> str:
-    '''Find the reference for a given version.'''
+    'Find the reference for a given version.'
     if WATCHWORD_REFERENCES[version] is None:
         return version
     return find_reference(WATCHWORD_REFERENCES[version])  # type: ignore
 
 
 def create_version_string(version: str) -> str:
-    '''Create a game version string with reference.'''
+    'Create a game version string with reference.'
     version_referenced = find_reference(version)
     if version == version_referenced:
         return version
@@ -66,7 +66,7 @@ client = commands.Bot(
 
 
 def embed(title: str, description: str, color: int = 0xFFFFFF) -> nextcord.Embed:
-    '''Create a simple embed.'''
+    'Create a simple embed.'
     return (
         nextcord.Embed(title=title, description=description, color=color)
         # .set_author(
@@ -78,13 +78,13 @@ def embed(title: str, description: str, color: int = 0xFFFFFF) -> nextcord.Embed
 
 
 def find_definition(word: str) -> str | None:
-    '''Find the definition of a word in the wordlist.'''
+    'Find the definition of a word in the wordlist.'
     return definitions.get(word)
 
 
 @client.event
 async def on_ready() -> None:
-    '''Event triggered when the bot is ready.'''
+    'Event triggered when the bot is ready.'
     print(f'Logged in as {client.user} (ID: {client.user.id})')  # type: ignore
     await client.change_presence(
         activity=nextcord.Activity(
@@ -103,7 +103,7 @@ async def check(
     word: str = OPTIONS['word'],
     version: str = OPTIONS['version'],
 ) -> None:
-    '''Check a word against the Watchword dictionary.'''
+    'Check a word against the Watchword dictionary.'
     print(f'Word check by {interaction.user} ({interaction.user.id}) - "{word}"')  # type: ignore
     word = word.upper().strip()
     word = ''.join(c for c in word if c in ascii_uppercase)
@@ -116,7 +116,7 @@ async def check(
             await interaction.response.defer(ephemeral=True)
             print(f'\tInvalid input: "{y}"')
             await interaction.followup.send(
-                f':warning: Invalid input: `{word or '(empty)'}`\n> {y}',
+                f':warning: Invalid input: `{word or "(empty)"}`\n> {y}',
             )
             return
     await interaction.response.defer()
@@ -131,7 +131,7 @@ async def check(
         )
         if _definition := find_definition(word):
             print(f'\tDefinition found: "{_definition}"')
-            _embed=_embed.add_field(
+            _embed = _embed.add_field(
                 name='Definition', value=f'```\n{_definition}\n```', inline=False,
             )
         else:
@@ -139,7 +139,7 @@ async def check(
         print(f'\tFlags: {(_flags := wordlists[version_referenced][word])}')
         _embed.add_field(
             name='Flags',
-            value=f'{', '.join(sorted(_flags))}' if _flags else '(none)',
+            value=f'{", ".join(sorted(_flags))}' if _flags else '(none)',
             inline=False,
         )
         await interaction.followup.send(embed=_embed)
@@ -154,39 +154,9 @@ async def check(
         )
 
 
-@client.slash_command(
-    name='coverage',
-    description='Get the coverage of word definitions',
-)
-async def coverage(
-    interaction: nextcord.Interaction, version: str = OPTIONS['version'],
-) -> None:
-    '''Get the coverage of word definitions in the Watchword dictionary.'''
-    await interaction.response.defer(ephemeral=True)
-    version_ref = find_reference(version)
-    version_s = create_version_string(version)
-    _words = len(wordlists[version_ref])
-    _definitions = len({word for word in definitions if word in wordlists[version_ref]})
-    await interaction.followup.send(
-        embed=embed(
-            title=':bar_chart: Coverage',
-            description=f'Watchword {version_s}```\n{
-                '\n'.join(
-                    [
-                        f'words: {_words:,}',
-                        f'definitions: {_definitions:,}',
-                        f'coverage: {_definitions / _words * 100:.2f}%',
-                    ]
-                )
-            }\n```',
-        ),
-    )
-    print(f'Coverage requested by {interaction.user} ({interaction.user.id})')  # type: ignore
-
-
 @client.slash_command(name='ping', description='Measure the current bot latency')
 async def ping(interaction: nextcord.Interaction) -> None:
-    '''Ping command to check bot latency.'''
+    'Ping command to check bot latency.'
     await interaction.response.defer(ephemeral=True)
     _latency: float = round(client.latency * 100, 2)
     await interaction.followup.send(
@@ -208,8 +178,10 @@ if __name__ == '__main__':
         ).items():
             if (_path := Path('data', 'wordlists', f'{_version}_{_type}.txt')).exists():
                 wordlists[_version] |= {
-                    word.strip().upper():
-                    wordlists[_version].get(word.strip().upper(), set()) | set(_flags)
+                    word.strip().upper(): wordlists[_version].get(
+                        word.strip().upper(), set(),
+                    )
+                    | set(_flags)
                     for word in _path.read_text().strip().splitlines()
                 }
         if not wordlists[_version]:
